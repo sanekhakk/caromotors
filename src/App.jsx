@@ -14,6 +14,7 @@ import AdminLayout from './pages/admin/AdminLayout';
 import Wishlist from './pages/Wishlist';
 import Footer from './components/Footer';
 import Categories from './pages/Categories';
+import ManageDealers from './pages/admin/ManageDealers';
 
 const AppRoutes = () => {
   const { user, loading } = useContext(AuthContext);
@@ -32,6 +33,7 @@ const AppRoutes = () => {
             <Route path="manage-cars" element={<ManageInventory />} />
             <Route path="bookings" element={<ManageBookings />} />
             <Route path="users" element={<UserManagement />} />
+            <Route path="dealers" element={<ManageDealers />} />
           </Route>
           {/* Redirect any root access to admin dashboard */}
           <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />

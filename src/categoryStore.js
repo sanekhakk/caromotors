@@ -7,8 +7,8 @@
 
 export const BUILT_IN_CATEGORIES = [
   {
-    id: 'sedan',
-    label: 'Sedans',
+    id: 'Toyota',
+    label: 'Toyota',
     emoji: '🚙',
     desc: 'Comfort meets elegance',
     gradient: 'from-blue-900 to-blue-700',
@@ -23,8 +23,8 @@ export const BUILT_IN_CATEGORIES = [
     },
   },
   {
-    id: 'suv',
-    label: 'SUVs & MUVs',
+    id: 'BMW',
+    label: 'BMW',
     emoji: '🛻',
     desc: 'Power, space and versatility',
     gradient: 'from-emerald-900 to-emerald-700',
@@ -39,8 +39,8 @@ export const BUILT_IN_CATEGORIES = [
     },
   },
   {
-    id: 'hatchback',
-    label: 'Hatchbacks',
+    id: 'Audi',
+    label: 'Audi',
     emoji: '🏎️',
     desc: 'Zippy, affordable & city-ready',
     gradient: 'from-violet-900 to-violet-700',
@@ -53,8 +53,8 @@ export const BUILT_IN_CATEGORIES = [
     },
   },
   {
-    id: 'luxury',
-    label: 'Luxury',
+    id: 'Mercedes Benz',
+    label: 'Mercedes Benz',
     emoji: '💎',
     desc: 'Premium & prestige vehicles',
     gradient: 'from-amber-900 to-yellow-700',
@@ -68,8 +68,8 @@ export const BUILT_IN_CATEGORIES = [
     },
   },
   {
-    id: 'electric',
-    label: 'Electric',
+    id: 'Maruthi',
+    label: 'Maruthi',
     emoji: '⚡',
     desc: 'Clean, green, future-ready',
     gradient: 'from-cyan-900 to-cyan-700',
@@ -78,8 +78,8 @@ export const BUILT_IN_CATEGORIES = [
     matchFn: (car) => car.fuelType === 'Electric',
   },
   {
-    id: 'diesel',
-    label: 'Diesel',
+    id: 'Hyundai',
+    label: 'Hyundai',
     emoji: '🛢️',
     desc: 'Fuel-efficient long haulers',
     gradient: 'from-slate-800 to-slate-600',
@@ -87,26 +87,7 @@ export const BUILT_IN_CATEGORIES = [
     isCustom: false,
     matchFn: (car) => car.fuelType === 'Diesel',
   },
-  {
-    id: 'petrol',
-    label: 'Petrol',
-    emoji: '⛽',
-    desc: 'Smooth, responsive & popular',
-    gradient: 'from-orange-900 to-orange-700',
-    accent: '#FB923C',
-    isCustom: false,
-    matchFn: (car) => car.fuelType === 'Petrol',
-  },
-  {
-    id: 'cng',
-    label: 'CNG',
-    emoji: '🌿',
-    desc: 'Low running cost & eco-friendly',
-    gradient: 'from-green-900 to-green-700',
-    accent: '#4ADE80',
-    isCustom: false,
-    matchFn: (car) => car.fuelType === 'CNG',
-  },
+  
 ];
 
 // Price range buckets for "Shop by Price"
