@@ -10,288 +10,167 @@ const UserDashboard = () => {
   const { user } = useContext(AuthContext);
 
   useEffect(() => {
-    const fetchMyBookings = async () => {
-      try {
-        const res = await axios.get('http://localhost:4000/api/bookings/my');
-        setBookings(res.data);
-        setLoading(false);
-      } catch (err) {
-        console.error("Error fetching bookings:", err);
-        setLoading(false);
-      }
-    };
-    fetchMyBookings();
+    axios.get('http://localhost:4000/api/bookings/my')
+      .then(res => { setBookings(res.data); setLoading(false); })
+      .catch(() => setLoading(false));
   }, []);
 
-  const getStatusColor = (status) => {
-    const colors = {
-      'Token Paid': 'bg-blue-100 text-blue-800 border-blue-200',
-      'In Discussion': 'bg-amber-100 text-amber-800 border-amber-200',
-      'Deal Closed': 'bg-green-100 text-green-800 border-green-200',
-      'Cancelled': 'bg-red-100 text-red-800 border-red-200'
-    };
-    return colors[status] || 'bg-slate-100 text-slate-800 border-slate-200';
-  };
+  const getStatusColor = (status) => ({
+    'Token Paid': 'bg-blue-100 text-blue-700 border-blue-200',
+    'In Discussion': 'bg-amber-100 text-amber-700 border-amber-200',
+    'Deal Closed': 'bg-green-100 text-green-700 border-green-200',
+    'Cancelled': 'bg-red-100 text-red-700 border-red-200',
+  }[status] || 'bg-slate-100 text-slate-700 border-slate-200');
 
-  const getStatusIcon = (status) => {
-    const icons = {
-      'Token Paid': <FaClock className="animate-pulse-slow" />,
-      'In Discussion': <FaWhatsapp className="animate-wiggle" />,
-      'Deal Closed': <FaCheckCircle className="animate-heart-beat" />,
-      'Cancelled': <span>✕</span>
-    };
-    return icons[status] || <FaClock />;
-  };
+  const getProgressWidth = (status) => ({
+    'Token Paid': 'w-1/3 bg-blue-500',
+    'In Discussion': 'w-2/3 bg-amber-500',
+    'Deal Closed': 'w-full bg-green-500',
+    'Cancelled': 'w-1/4 bg-red-500',
+  }[status] || 'w-0');
 
-  const filteredBookings = filter === 'all' 
-    ? bookings 
-    : bookings.filter(b => b.status === filter);
+  const filteredBookings = filter === 'all' ? bookings : bookings.filter(b => b.status === filter);
 
   const stats = {
     total: bookings.length,
-    tokenPaid: bookings.filter(b => b.status === 'Token Paid').length,
-    inDiscussion: bookings.filter(b => b.status === 'In Discussion').length,
-    dealClosed: bookings.filter(b => b.status === 'Deal Closed').length,
-    totalValue: bookings.reduce((sum, b) => sum + (b.car?.price || 0), 0)
+    pending: bookings.filter(b => b.status === 'Token Paid').length,
+    closed: bookings.filter(b => b.status === 'Deal Closed').length,
   };
 
+  const filterTabs = ['all', 'Token Paid', 'In Discussion', 'Deal Closed', 'Cancelled'];
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#F8FAFC] via-[#F1F5F9] to-[#E2E8F0] relative overflow-hidden">
-      {/* Animated Background Elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 left-10 w-72 h-72 bg-blue-500/5 rounded-full blur-3xl animate-float"></div>
-        <div className="absolute bottom-20 right-10 w-96 h-96 bg-[#F59E0B]/5 rounded-full blur-3xl animate-float-delayed"></div>
-        <div className="absolute top-1/2 left-1/3 w-64 h-64 bg-green-500/5 rounded-full blur-3xl animate-pulse-slow"></div>
-      </div>
-
-      <div className="relative max-w-7xl mx-auto px-4 py-16">
-        {/* Header Section */}
-        <div className="mb-12 animate-slide-in-top">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-[#F59E0B] rounded-2xl blur-xl opacity-50 animate-pulse-slow"></div>
-              <div className="relative bg-gradient-to-r from-blue-500 to-[#F59E0B] p-4 rounded-2xl">
-                <FaClipboardList className="text-white text-3xl" />
-              </div>
-            </div>
-            <div>
-              <h1 className="text-5xl font-black text-[#0F172A] tracking-tight">My Bookings</h1>
-              <p className="text-slate-500 font-medium mt-2">Track all your vehicle enquiries and deals</p>
-            </div>
+    <div className="min-h-screen bg-[#F8FAFC]">
+      <div className="max-w-4xl mx-auto px-3 sm:px-4 py-6">
+        {/* Header */}
+        <div className="flex items-center gap-3 mb-5">
+          <div className="bg-gradient-to-r from-blue-500 to-[#F59E0B] p-3 rounded-xl">
+            <FaClipboardList className="text-white text-lg" />
           </div>
-          <div className="h-1.5 w-32 bg-gradient-to-r from-blue-500 to-[#F59E0B] rounded-full"></div>
-        </div>
-
-        {/* Stats Dashboard */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-          {/* Total Bookings */}
-          <div className="group animate-fade-in-up" style={{animationDelay: '0s'}}>
-            <div className="relative">
-              <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-3xl opacity-20 group-hover:opacity-40 blur transition duration-500"></div>
-              <div className="relative bg-white/60 backdrop-blur-xl p-6 rounded-3xl border border-slate-200/50 hover:shadow-2xl transition-all duration-500">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="p-3 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl">
-                    <FaClipboardList className="text-white text-xl" />
-                  </div>
-                  <div className="h-2 w-2 bg-blue-500 rounded-full animate-pulse"></div>
-                </div>
-                <p className="text-4xl font-black text-[#0F172A] mb-1">{stats.total}</p>
-                <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">Total Bookings</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Token Paid */}
-          <div className="group animate-fade-in-up" style={{animationDelay: '0.1s'}}>
-            <div className="relative">
-              <div className="absolute -inset-0.5 bg-gradient-to-r from-amber-500 to-orange-500 rounded-3xl opacity-20 group-hover:opacity-40 blur transition duration-500"></div>
-              <div className="relative bg-white/60 backdrop-blur-xl p-6 rounded-3xl border border-slate-200/50 hover:shadow-2xl transition-all duration-500">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="p-3 bg-gradient-to-br from-amber-500 to-orange-500 rounded-2xl">
-                    <FaClock className="text-white text-xl" />
-                  </div>
-                  <div className="h-2 w-2 bg-amber-500 rounded-full animate-pulse"></div>
-                </div>
-                <p className="text-4xl font-black text-[#0F172A] mb-1">{stats.tokenPaid}</p>
-                <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">Pending</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Deal Closed */}
-          <div className="group animate-fade-in-up" style={{animationDelay: '0.2s'}}>
-            <div className="relative">
-              <div className="absolute -inset-0.5 bg-gradient-to-r from-green-500 to-emerald-500 rounded-3xl opacity-20 group-hover:opacity-40 blur transition duration-500"></div>
-              <div className="relative bg-white/60 backdrop-blur-xl p-6 rounded-3xl border border-slate-200/50 hover:shadow-2xl transition-all duration-500">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="p-3 bg-gradient-to-br from-green-500 to-emerald-500 rounded-2xl">
-                    <FaCheckCircle className="text-white text-xl" />
-                  </div>
-                  <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse"></div>
-                </div>
-                <p className="text-4xl font-black text-[#0F172A] mb-1">{stats.dealClosed}</p>
-                <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">Completed</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Total Value */}
-          <div className="group animate-fade-in-up" style={{animationDelay: '0.3s'}}>
-            <div className="relative">
-              <div className="absolute -inset-0.5 bg-gradient-to-r from-purple-500 to-pink-500 rounded-3xl opacity-20 group-hover:opacity-40 blur transition duration-500"></div>
-              <div className="relative bg-white/60 backdrop-blur-xl p-6 rounded-3xl border border-slate-200/50 hover:shadow-2xl transition-all duration-500">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="p-3 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl">
-                    <FaChartLine className="text-white text-xl" />
-                  </div>
-                  <div className="h-2 w-2 bg-purple-500 rounded-full animate-pulse"></div>
-                </div>
-                <p className="text-2xl font-black text-[#0F172A] mb-1">₹{(stats.totalValue / 100000).toFixed(1)}L</p>
-                <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">Total Value</p>
-              </div>
-            </div>
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-black text-[#0F172A]">My Bookings</h1>
+            <p className="text-slate-400 text-xs font-medium">Track your vehicle enquiries</p>
           </div>
         </div>
 
-        {/* Filter Tabs */}
-        <div className="mb-8 animate-fade-in">
-          <div className="bg-white/60 backdrop-blur-xl p-2 rounded-2xl border border-slate-200/50 inline-flex gap-2">
-            {['all', 'Token Paid', 'In Discussion', 'Deal Closed'].map((status) => (
-              <button
-                key={status}
-                onClick={() => setFilter(status)}
-                className={`px-6 py-3 rounded-xl font-bold text-sm transition-all duration-300 ${
-                  filter === status
-                    ? 'bg-gradient-to-r from-[#F59E0B] to-[#FBBF24] text-[#0F172A] shadow-lg shadow-[#F59E0B]/30'
-                    : 'text-slate-600 hover:text-[#0F172A] hover:bg-slate-100'
-                }`}
-              >
-                {status === 'all' ? 'All Bookings' : status}
-              </button>
+        {/* Stats Strip */}
+        <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-5">
+          {[
+            { label: 'Total', value: stats.total, color: 'bg-blue-50 text-blue-700 border-blue-100' },
+            { label: 'Pending', value: stats.pending, color: 'bg-amber-50 text-amber-700 border-amber-100' },
+            { label: 'Closed', value: stats.closed, color: 'bg-green-50 text-green-700 border-green-100' },
+          ].map(s => (
+            <div key={s.label} className={`${s.color} rounded-2xl p-3 sm:p-4 border text-center`}>
+              <p className="text-2xl font-black">{s.value}</p>
+              <p className="text-[10px] font-bold uppercase tracking-wide opacity-70">{s.label}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Filter Tabs — horizontal scroll */}
+        <div className="flex gap-2 overflow-x-auto pb-2 mb-5 scrollbar-hide">
+          {filterTabs.map(tab => (
+            <button
+              key={tab}
+              onClick={() => setFilter(tab)}
+              className={`flex-shrink-0 px-4 py-2 rounded-xl font-bold text-xs transition-all duration-200 ${
+                filter === tab
+                  ? 'bg-[#F59E0B] text-[#0F172A] shadow-md'
+                  : 'bg-white text-slate-600 border border-slate-200 hover:border-[#F59E0B]'
+              }`}
+            >
+              {tab === 'all' ? 'All' : tab}
+            </button>
+          ))}
+        </div>
+
+        {/* Content */}
+        {loading ? (
+          <div className="space-y-3">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="bg-white rounded-2xl overflow-hidden animate-pulse flex gap-3 p-3">
+                <div className="h-20 w-28 bg-slate-200 rounded-xl flex-shrink-0"></div>
+                <div className="flex-1 space-y-2 py-1">
+                  <div className="h-3 bg-slate-200 rounded w-3/4"></div>
+                  <div className="h-3 bg-slate-200 rounded w-1/2"></div>
+                  <div className="h-3 bg-slate-200 rounded w-2/3"></div>
+                </div>
+              </div>
             ))}
           </div>
-        </div>
-
-        {loading ? (
-          <div className="flex flex-col items-center justify-center py-32">
-            <div className="relative w-24 h-24 mb-8">
-              <div className="absolute inset-0 border-4 border-[#F59E0B]/20 rounded-full"></div>
-              <div className="absolute inset-0 border-4 border-transparent border-t-[#F59E0B] rounded-full animate-spin"></div>
-              <div className="absolute inset-2 border-4 border-transparent border-t-blue-500 rounded-full animate-spin-reverse"></div>
-            </div>
-            <p className="text-slate-600 font-black text-lg animate-pulse">Loading bookings...</p>
-          </div>
         ) : filteredBookings.length === 0 ? (
-          <div className="text-center py-32 bg-white/60 backdrop-blur-xl rounded-3xl border-2 border-dashed border-slate-300 animate-fade-in">
-            <div className="relative inline-block mb-8">
-              <div className="absolute inset-0 bg-blue-500/20 blur-2xl rounded-full animate-pulse-slow"></div>
-              <div className="relative w-24 h-24 bg-gradient-to-br from-blue-100 to-blue-200 rounded-full flex items-center justify-center">
-                <FaCar className="text-blue-400 text-4xl" />
-              </div>
-            </div>
-            <h3 className="text-3xl font-black text-[#0F172A] mb-3">No bookings found</h3>
-            <p className="text-slate-500 text-lg">
-              {filter === 'all' 
-                ? 'Start your journey by booking your dream car today!'
-                : `No bookings with status: ${filter}`
-              }
+          <div className="text-center py-20 bg-white rounded-3xl border-2 border-dashed border-slate-200">
+            <FaCar className="mx-auto text-slate-200 text-5xl mb-4" />
+            <h3 className="text-xl font-black text-[#0F172A] mb-2">No bookings found</h3>
+            <p className="text-slate-500 text-sm">
+              {filter === 'all' ? 'Start your journey by booking your dream car!' : `No "${filter}" bookings yet.`}
             </p>
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-3">
             {filteredBookings.map((booking, index) => (
-              <div 
-                key={booking._id} 
-                className="group animate-fade-in-up"
-                style={{animationDelay: `${index * 0.1}s`}}
+              <div
+                key={booking._id}
+                className="bg-white rounded-2xl border border-slate-100 overflow-hidden hover:shadow-lg transition-all duration-300 animate-fade-in-up"
+                style={{ animationDelay: `${index * 0.05}s` }}
               >
-                <div className="relative">
-                  <div className="absolute -inset-0.5 bg-gradient-to-r from-[#F59E0B] via-blue-500 to-purple-500 rounded-3xl opacity-0 group-hover:opacity-20 blur transition duration-500"></div>
-                  
-                  <div className="relative bg-white/80 backdrop-blur-xl rounded-3xl border border-slate-200/50 overflow-hidden hover:shadow-2xl transition-all duration-500">
-                    <div className="grid grid-cols-1 md:grid-cols-12 gap-6 p-6">
-                      {/* Car Image */}
-                      <div className="md:col-span-3">
-                        <div className="relative h-48 md:h-full rounded-2xl overflow-hidden group/img">
-                          <div className="absolute inset-0 bg-gradient-to-t from-[#0F172A]/60 to-transparent z-10"></div>
-                          <img 
-                            src={booking.car?.images[0]} 
-                            alt={booking.car?.title}
-                            className="w-full h-full object-cover group-hover/img:scale-110 transition-transform duration-700" 
-                          />
-                          <div className="absolute top-3 left-3 z-20">
-                            <span className="bg-white/95 backdrop-blur-md text-[#0F172A] text-[10px] font-black px-3 py-1.5 rounded-full uppercase tracking-widest shadow-lg">
-                              {booking.car?.brand}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Booking Details */}
-                      <div className="md:col-span-6">
-                        <h3 className="text-2xl font-black text-[#0F172A] mb-3 group-hover:text-[#F59E0B] transition-colors">
-                          {booking.car?.title}
-                        </h3>
-                        
-                        <div className="grid grid-cols-2 gap-4 mb-4">
-                          <div className="flex items-center gap-2 text-slate-600">
-                            <FaReceipt className="text-[#F59E0B]" />
-                            <div>
-                              <p className="text-xs text-slate-400 font-bold">Transaction ID</p>
-                              <p className="text-sm font-black">{booking.paymentId?.slice(-8)}</p>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2 text-slate-600">
-                            <FaCalendarAlt className="text-[#F59E0B]" />
-                            <div>
-                              <p className="text-xs text-slate-400 font-bold">Booked On</p>
-                              <p className="text-sm font-black">
-                                {new Date(booking.createdAt).toLocaleDateString('en-US', { 
-                                  month: 'short', 
-                                  day: 'numeric', 
-                                  year: 'numeric' 
-                                })}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-2 text-slate-600">
-                          <FaMapMarkerAlt className="text-[#F59E0B]" />
-                          <span className="text-sm font-bold">{booking.car?.location}</span>
-                        </div>
-                      </div>
-
-                      {/* Status and Price */}
-                      <div className="md:col-span-3 flex flex-col justify-between items-end">
-                        <div className={`px-4 py-2 rounded-full border-2 font-black text-sm flex items-center gap-2 ${getStatusColor(booking.status)}`}>
-                          {getStatusIcon(booking.status)}
-                          {booking.status}
-                        </div>
-                        
-                        <div className="text-right mt-4">
-                          <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-1">Vehicle Price</p>
-                          <p className="text-3xl font-black text-[#0F172A]">
-                            ₹{booking.car?.price?.toLocaleString()}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Progress Bar */}
-                    <div className="px-6 pb-6">
-                      <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-                        <div 
-                          className={`h-full rounded-full transition-all duration-1000 ${
-                            booking.status === 'Token Paid' ? 'w-1/3 bg-gradient-to-r from-blue-500 to-cyan-500' :
-                            booking.status === 'In Discussion' ? 'w-2/3 bg-gradient-to-r from-amber-500 to-orange-500' :
-                            booking.status === 'Deal Closed' ? 'w-full bg-gradient-to-r from-green-500 to-emerald-500' :
-                            'w-1/4 bg-gradient-to-r from-red-500 to-pink-500'
-                          }`}
-                        ></div>
-                      </div>
+                {/* Card layout: row on mobile too */}
+                <div className="flex gap-3 p-3 sm:p-4">
+                  {/* Car Image */}
+                  <div className="flex-shrink-0">
+                    <div className="relative h-20 w-28 sm:h-24 sm:w-36 rounded-xl overflow-hidden">
+                      <img
+                        src={booking.car?.images[0]}
+                        alt={booking.car?.title}
+                        className="w-full h-full object-cover"
+                      />
+                      <span className="absolute top-1 left-1 bg-white/95 text-[#0F172A] text-[8px] font-black px-1.5 py-0.5 rounded-full uppercase">
+                        {booking.car?.brand}
+                      </span>
                     </div>
                   </div>
+
+                  {/* Details */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2 mb-1.5">
+                      <h3 className="text-sm sm:text-base font-black text-[#0F172A] leading-tight line-clamp-2">
+                        {booking.car?.title}
+                      </h3>
+                      <span className={`flex-shrink-0 text-[9px] font-black px-2 py-1 rounded-full border ${getStatusColor(booking.status)}`}>
+                        {booking.status}
+                      </span>
+                    </div>
+
+                    <p className="text-lg font-black text-[#0F172A] mb-1.5">
+                      ₹{(booking.car?.price / 100000)?.toFixed(1)}L
+                    </p>
+
+                    <div className="flex flex-wrap gap-3 text-[10px] text-slate-500 font-bold">
+                      {booking.car?.location && (
+                        <span className="flex items-center gap-1">
+                          <FaMapMarkerAlt className="text-[#F59E0B]" size={8} />
+                          {booking.car.location}
+                        </span>
+                      )}
+                      {booking.createdAt && (
+                        <span className="flex items-center gap-1">
+                          <FaCalendarAlt className="text-[#F59E0B]" size={8} />
+                          {new Date(booking.createdAt).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' })}
+                        </span>
+                      )}
+                      {booking.paymentId && (
+                        <span className="flex items-center gap-1">
+                          <FaReceipt className="text-[#F59E0B]" size={8} />
+                          #{booking.paymentId.slice(-6)}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Progress bar */}
+                <div className="h-1.5 bg-slate-100 mx-3 mb-3 rounded-full overflow-hidden">
+                  <div className={`h-full rounded-full transition-all duration-700 ${getProgressWidth(booking.status)}`}></div>
                 </div>
               </div>
             ))}

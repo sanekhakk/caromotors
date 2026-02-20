@@ -3,177 +3,220 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import AuthContext from '../context/AuthContext';
 import logo from '../assets/logo.png';
 import AuthModal from './AuthModal';
-import { FaHeart, FaUser, FaHome } from 'react-icons/fa';
+import { FaHeart, FaUser, FaHome, FaBars, FaTimes } from 'react-icons/fa';
 
 const Navbar = () => {
   const { user, logout } = useContext(AuthContext);
   const navigate = useNavigate();
   const location = useLocation();
   const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 20);
-    };
+    const handleScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Close drawer on route change
+  useEffect(() => {
+    setDrawerOpen(false);
+  }, [location.pathname]);
+
+  // Lock body scroll when drawer is open
+  useEffect(() => {
+    document.body.style.overflow = drawerOpen ? 'hidden' : '';
+    return () => { document.body.style.overflow = ''; };
+  }, [drawerOpen]);
+
   const isActive = (path) => location.pathname === path;
+
+  const navLinkClass = (path) =>
+    `flex items-center gap-3 px-4 py-3.5 rounded-xl font-bold text-sm transition-all duration-200 ${
+      isActive(path)
+        ? 'text-[#F59E0B] bg-[#F59E0B]/10'
+        : 'text-slate-700 hover:text-[#F59E0B] hover:bg-slate-50'
+    }`;
+
+  const desktopLinkClass = (path) =>
+    `flex items-center gap-2 px-4 py-2.5 rounded-full font-bold text-sm transition-all duration-300 ${
+      isActive(path)
+        ? 'text-[#F59E0B] bg-[#F59E0B]/10'
+        : 'text-slate-700 hover:text-[#F59E0B] hover:bg-[#F59E0B]/5'
+    }`;
 
   return (
     <>
-    <nav className={`sticky top-0 z-50 transition-all duration-500 ${
-      scrolled 
-        ? 'bg-white/95 backdrop-blur-xl shadow-xl shadow-slate-900/5' 
-        : 'bg-white/80 backdrop-blur-md'
-    } border-b ${scrolled ? 'border-slate-300/50' : 'border-slate-200'}`}>
-      <div className="px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-20 items-center">
-          {/* Logo with Hover Animation */}
-          <Link to="/" className="flex items-center gap-2 group relative">
-            <div className="absolute -inset-2 bg-gradient-to-r from-[#F59E0B] to-[#FBBF24] rounded-xl opacity-0 group-hover:opacity-20 blur transition duration-500"></div>
-            <img 
-              src={logo} 
-              alt="Caromotors Logo" 
-              className="h-28 relative transform group-hover:scale-110 transition-transform duration-300" 
-            />
+      <nav className={`sticky top-0 z-50 transition-all duration-500 ${
+        scrolled
+          ? 'bg-white/95 backdrop-blur-xl shadow-xl shadow-slate-900/5'
+          : 'bg-white/90 backdrop-blur-md'
+      } border-b border-slate-200/70`}>
+        <div className="px-4 sm:px-6">
+          <div className="flex justify-between h-16 items-center">
+
+            {/* Logo */}
+            <Link to="/" className="flex items-center group">
+              <img src={logo} alt="Caromotors" className="h-20 transform group-hover:scale-105 transition-transform duration-300" />
+            </Link>
+
+            {/* ── Desktop Nav ── */}
+            <div className="hidden md:flex items-center gap-1">
+              <Link to="/" className={desktopLinkClass('/')}>
+                <FaHome size={13} /> Home
+              </Link>
+              {user && user.role !== 'admin' && (
+                <>
+                  <Link to="/wishlist" className={desktopLinkClass('/wishlist')}>
+                    <FaHeart size={13} /> Wishlist
+                  </Link>
+                  <Link to="/dashboard" className={desktopLinkClass('/dashboard')}>
+                    <FaUser size={13} /> My Bookings
+                  </Link>
+                </>
+              )}
+              {user ? (
+                <button
+                  onClick={() => { logout(); navigate('/'); }}
+                  className="ml-3 bg-[#0F172A] text-white px-5 py-2.5 rounded-full text-sm font-black hover:bg-red-600 transition-all duration-300 shadow-lg"
+                >
+                  Logout
+                </button>
+              ) : (
+                <div className="flex items-center gap-2 ml-3">
+                  <button onClick={() => setIsAuthOpen(true)}
+                    className="text-slate-700 font-bold text-sm px-4 py-2.5 rounded-full hover:bg-slate-100 transition-all">
+                    Login
+                  </button>
+                  <button onClick={() => setIsAuthOpen(true)}
+                    className="bg-[#0F172A] text-white px-5 py-2.5 rounded-full text-sm font-black hover:bg-[#F59E0B] hover:text-[#0F172A] transition-all duration-300 shadow-lg">
+                    Register
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* ── Mobile: quick wishlist + hamburger ── */}
+            <div className="flex md:hidden items-center gap-1">
+              {user && user.role !== 'admin' && (
+                <Link to="/wishlist" className="p-2.5 text-slate-600 hover:text-[#F59E0B] transition-colors">
+                  <FaHeart size={17} />
+                </Link>
+              )}
+              <button
+                onClick={() => setDrawerOpen(true)}
+                className="p-2.5 text-slate-700 hover:text-[#F59E0B] transition-colors"
+                aria-label="Open menu"
+              >
+                <FaBars size={20} />
+              </button>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      {/* ══════════════════════════════
+          RIGHT-SIDE MOBILE DRAWER
+      ══════════════════════════════ */}
+
+      {/* Backdrop */}
+      <div
+        className={`fixed inset-0 z-[60] md:hidden transition-all duration-300 ${
+          drawerOpen ? 'visible bg-[#0F172A]/50 backdrop-blur-sm' : 'invisible bg-transparent'
+        }`}
+        onClick={() => setDrawerOpen(false)}
+      />
+
+      {/* Drawer panel — slides in from the right */}
+      <div
+        className={`fixed top-0 right-0 h-full w-72 z-[70] md:hidden bg-white shadow-2xl flex flex-col transition-transform duration-300 ease-in-out ${
+          drawerOpen ? 'translate-x-0' : 'translate-x-full'
+        }`}
+      >
+        {/* Drawer Header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+          <img src={logo} alt="Caromotors" className="h-14" />
+          <button
+            onClick={() => setDrawerOpen(false)}
+            className="p-2 text-slate-500 hover:text-[#F59E0B] hover:bg-slate-100 rounded-xl transition-all"
+            aria-label="Close menu"
+          >
+            <FaTimes size={18} />
+          </button>
+        </div>
+
+        {/* Drawer Nav Links */}
+        <nav className="flex-1 px-4 py-5 space-y-1 overflow-y-auto">
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-4 mb-3">Navigation</p>
+
+          <Link to="/" className={navLinkClass('/')}>
+            <div className={`p-1.5 rounded-lg ${isActive('/') ? 'bg-[#F59E0B]/20' : 'bg-slate-100'}`}>
+              <FaHome size={13} className={isActive('/') ? 'text-[#F59E0B]' : 'text-slate-500'} />
+            </div>
+            Home
           </Link>
 
-          <div className="hidden md:flex items-center space-x-2">
-            {/* Home Link with Active State */}
-            <Link 
-              to="/" 
-              className={`relative px-5 py-2.5 rounded-full font-bold text-sm transition-all duration-300 group ${
-                isActive('/') 
-                  ? 'text-[#F59E0B]' 
-                  : 'text-primary hover:text-accent'
-              }`}
-            >
-              <div className={`absolute inset-0 bg-gradient-to-r from-[#F59E0B]/10 to-[#FBBF24]/10 rounded-full transition-all duration-300 ${
-                isActive('/') ? 'opacity-100 scale-100' : 'opacity-0 scale-90 group-hover:opacity-100 group-hover:scale-100'
-              }`}></div>
-              <div className="flex items-center gap-2 relative z-10">
-                <FaHome className={`transition-transform duration-300 ${isActive('/') ? 'scale-110' : 'group-hover:scale-110'}`} />
-                <span>Home</span>
+          {user && user.role !== 'admin' && (
+            <>
+              <Link to="/wishlist" className={navLinkClass('/wishlist')}>
+                <div className={`p-1.5 rounded-lg ${isActive('/wishlist') ? 'bg-[#F59E0B]/20' : 'bg-slate-100'}`}>
+                  <FaHeart size={13} className={isActive('/wishlist') ? 'text-[#F59E0B]' : 'text-slate-500'} />
+                </div>
+                Wishlist
+              </Link>
+
+              <Link to="/dashboard" className={navLinkClass('/dashboard')}>
+                <div className={`p-1.5 rounded-lg ${isActive('/dashboard') ? 'bg-[#F59E0B]/20' : 'bg-slate-100'}`}>
+                  <FaUser size={13} className={isActive('/dashboard') ? 'text-[#F59E0B]' : 'text-slate-500'} />
+                </div>
+                My Bookings
+              </Link>
+            </>
+          )}
+        </nav>
+
+        {/* Drawer Footer — Auth actions */}
+        <div className="px-4 py-5 border-t border-slate-100 space-y-2">
+          {user ? (
+            <>
+              {/* User info chip */}
+              <div className="flex items-center gap-3 bg-slate-50 rounded-xl px-4 py-3 mb-3">
+                <div className="h-9 w-9 rounded-full bg-gradient-to-br from-[#F59E0B] to-amber-300 flex items-center justify-center font-black text-[#0F172A] text-sm flex-shrink-0">
+                  {user.role === 'admin' ? 'AD' : 'U'}
+                </div>
+                <div>
+                  <p className="text-xs font-black text-[#0F172A]">{user.role === 'admin' ? 'Admin' : 'My Account'}</p>
+                  <p className="text-[10px] text-slate-400 capitalize">{user.role}</p>
+                </div>
               </div>
-              {isActive('/') && (
-                <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1/2 h-0.5 bg-gradient-to-r from-[#F59E0B] to-[#FBBF24] rounded-full"></div>
-              )}
-            </Link>
-            
-            {user ? (
-              <div className="flex items-center gap-2">
-                {user.role !== 'admin' && (
-                  <>
-                    {/* Wishlist Link with Active State */}
-                    <Link 
-                      to="/wishlist" 
-                      className={`relative px-5 py-2.5 rounded-full font-bold text-sm transition-all duration-300 group ${
-                        isActive('/wishlist') 
-                          ? 'text-[#F59E0B]' 
-                          : 'text-primary hover:text-accent'
-                      }`}
-                    >
-                      <div className={`absolute inset-0 bg-gradient-to-r from-[#F59E0B]/10 to-[#FBBF24]/10 rounded-full transition-all duration-300 ${
-                        isActive('/wishlist') ? 'opacity-100 scale-100' : 'opacity-0 scale-90 group-hover:opacity-100 group-hover:scale-100'
-                      }`}></div>
-                      <div className="flex items-center gap-2 relative z-10">
-                        <FaHeart className={`transition-transform duration-300 ${isActive('/wishlist') ? 'scale-110 animate-heart-beat' : 'group-hover:scale-110 group-hover:animate-wiggle'}`} />
-                        <span>Wishlist</span>
-                      </div>
-                      {isActive('/wishlist') && (
-                        <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1/2 h-0.5 bg-gradient-to-r from-[#F59E0B] to-[#FBBF24] rounded-full"></div>
-                      )}
-                    </Link>
-
-                    {/* Dashboard Link with Active State */}
-                    <Link 
-                      to="/dashboard" 
-                      className={`relative px-5 py-2.5 rounded-full font-bold text-sm transition-all duration-300 group ${
-                        isActive('/dashboard') 
-                          ? 'text-[#F59E0B]' 
-                          : 'text-primary hover:text-accent'
-                      }`}
-                    >
-                      <div className={`absolute inset-0 bg-gradient-to-r from-[#F59E0B]/10 to-[#FBBF24]/10 rounded-full transition-all duration-300 ${
-                        isActive('/dashboard') ? 'opacity-100 scale-100' : 'opacity-0 scale-90 group-hover:opacity-100 group-hover:scale-100'
-                      }`}></div>
-                      <div className="flex items-center gap-2 relative z-10">
-                        <FaUser className={`transition-transform duration-300 ${isActive('/dashboard') ? 'scale-110' : 'group-hover:scale-110'}`} />
-                        <span>My Bookings</span>
-                      </div>
-                      {isActive('/dashboard') && (
-                        <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1/2 h-0.5 bg-gradient-to-r from-[#F59E0B] to-[#FBBF24] rounded-full"></div>
-                      )}
-                    </Link>
-                  </>
-                )}
-
-                {/* Animated Logout Button */}
-                <button 
-                  onClick={() => { logout(); navigate('/'); }} 
-                  className="relative ml-4 bg-gradient-to-r from-primary to-[#1E293B] text-white px-7 py-3 rounded-full text-sm font-black hover:shadow-2xl hover:shadow-slate-900/30 transition-all overflow-hidden group"
-                >
-                  <div className="absolute inset-0 bg-gradient-to-r from-red-500 to-red-600 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300"></div>
-                  <span className="relative z-10 flex items-center gap-2">
-                    Logout
-                    <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                    </svg>
-                  </span>
-                </button>
-              </div>
-            ) : (
-              <div className="flex items-center gap-3 ml-4">
-                {/* Login Button with Hover Effect */}
-                <button 
-                  onClick={() => setIsAuthOpen(true)} 
-                  className="relative px-6 py-2.5 rounded-full text-primary font-bold text-sm transition-all duration-300 group overflow-hidden"
-                >
-                  <div className="absolute inset-0 bg-gradient-to-r from-slate-100 to-slate-200 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300 rounded-full"></div>
-                  <span className="relative z-10 flex items-center gap-2">
-                    Login
-                    <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
-                    </svg>
-                  </span>
-                </button>
-
-                {/* Register Button with Advanced Animation */}
-                <button 
-                  onClick={() => setIsAuthOpen(true)} 
-                  className="relative bg-gradient-to-r from-[#0F172A] to-[#1E293B] text-white px-7 py-3 rounded-full text-sm font-black shadow-lg shadow-slate-900/20 overflow-hidden group"
-                >
-                  {/* Animated Background */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-[#F59E0B] to-[#FBBF24] transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-300"></div>
-                  
-                  {/* Shimmer Effect */}
-                  <div className="absolute inset-0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000">
-                    <div className="h-full w-1/2 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12"></div>
-                  </div>
-
-                  <span className="relative z-10 group-hover:text-[#0F172A] transition-colors flex items-center gap-2">
-                    Register
-                    <svg className="w-4 h-4 group-hover:rotate-90 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                    </svg>
-                  </span>
-
-                  {/* Glow Effect */}
-                  <div className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-xl bg-[#F59E0B]/50"></div>
-                </button>
-              </div>
-            )}
-          </div>
+              <button
+                onClick={() => { logout(); navigate('/'); }}
+                className="w-full bg-red-500 text-white py-3 rounded-xl text-sm font-black hover:bg-red-600 active:scale-95 transition-all"
+              >
+                Logout
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                onClick={() => { setIsAuthOpen(true); setDrawerOpen(false); }}
+                className="w-full border-2 border-[#0F172A] text-[#0F172A] py-3 rounded-xl text-sm font-black hover:bg-slate-50 active:scale-95 transition-all"
+              >
+                Login
+              </button>
+              <button
+                onClick={() => { setIsAuthOpen(true); setDrawerOpen(false); }}
+                className="w-full bg-[#0F172A] text-white py-3 rounded-xl text-sm font-black hover:bg-[#F59E0B] hover:text-[#0F172A] active:scale-95 transition-all duration-300"
+              >
+                Register
+              </button>
+            </>
+          )}
         </div>
       </div>
 
-      {/* Mobile Menu Indicator (Optional) */}
-      <div className="md:hidden absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-1 bg-gradient-to-r from-[#F59E0B] to-[#FBBF24] rounded-full"></div>
-    </nav>
-    <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
+      <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
     </>
   );
 };

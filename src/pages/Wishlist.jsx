@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
-import { FaHeart, FaTrash, FaEye, FaGasPump, FaCalendarAlt, FaTachometerAlt, FaMapMarkerAlt, FaArrowRight } from 'react-icons/fa';
+import { FaHeart, FaTrash, FaEye, FaGasPump, FaCalendarAlt, FaTachometerAlt, FaArrowRight, FaMapMarkerAlt } from 'react-icons/fa';
 
 const Wishlist = () => {
   const [wishlistCars, setWishlistCars] = useState([]);
@@ -9,17 +9,9 @@ const Wishlist = () => {
   const [removingId, setRemovingId] = useState(null);
 
   useEffect(() => {
-    const fetchWishlist = async () => {
-      try {
-        const res = await axios.get('http://localhost:4000/api/auth/me'); 
-        setWishlistCars(res.data.wishlist);
-        setLoading(false);
-      } catch (err) {
-        console.error("Failed to fetch wishlist:", err);
-        setLoading(false);
-      }
-    };
-    fetchWishlist();
+    axios.get('http://localhost:4000/api/auth/me')
+      .then(res => { setWishlistCars(res.data.wishlist); setLoading(false); })
+      .catch(() => setLoading(false));
   }, []);
 
   const handleRemove = async (carId) => {
@@ -27,182 +19,114 @@ const Wishlist = () => {
     try {
       await axios.put(`http://localhost:4000/api/auth/wishlist/${carId}`);
       setTimeout(() => {
-        setWishlistCars(wishlistCars.filter(car => car._id !== carId));
+        setWishlistCars(prev => prev.filter(c => c._id !== carId));
         setRemovingId(null);
       }, 300);
-    } catch (err) {
-      console.error("Failed to remove from wishlist:", err);
-      setRemovingId(null);
-    }
+    } catch { setRemovingId(null); }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#F8FAFC] via-[#F1F5F9] to-[#E2E8F0] relative overflow-hidden">
-      {/* Animated Background Elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 left-10 w-72 h-72 bg-[#F59E0B]/5 rounded-full blur-3xl animate-float"></div>
-        <div className="absolute bottom-20 right-10 w-96 h-96 bg-pink-500/5 rounded-full blur-3xl animate-float-delayed"></div>
-        <div className="absolute top-1/2 left-1/3 w-64 h-64 bg-purple-500/5 rounded-full blur-3xl animate-pulse-slow"></div>
-      </div>
-
-      <div className="relative max-w-7xl mx-auto px-4 py-16">
-        {/* Header Section */}
-        <div className="mb-12 animate-slide-in-top">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-r from-[#F59E0B] to-pink-500 rounded-2xl blur-xl opacity-50 animate-pulse-slow"></div>
-              <div className="relative bg-gradient-to-r from-[#F59E0B] to-pink-500 p-4 rounded-2xl">
-                <FaHeart className="text-white text-3xl animate-heart-beat" />
-              </div>
-            </div>
-            <div>
-              <h1 className="text-5xl font-black text-[#0F172A] tracking-tight">My Wishlist</h1>
-              <p className="text-slate-500 font-medium mt-2">Your favorite vehicles in one place</p>
-            </div>
+    <div className="min-h-screen bg-[#F8FAFC]">
+      <div className="max-w-5xl mx-auto px-3 sm:px-4 py-6">
+        {/* Header */}
+        <div className="flex items-center gap-3 mb-5">
+          <div className="bg-gradient-to-r from-[#F59E0B] to-pink-500 p-3 rounded-xl">
+            <FaHeart className="text-white text-lg animate-heart-beat" />
           </div>
-          <div className="h-1.5 w-32 bg-gradient-to-r from-[#F59E0B] to-pink-500 rounded-full"></div>
-        </div>
-
-        {/* Stats Card */}
-        <div className="mb-12 animate-fade-in">
-          <div className="bg-white/60 backdrop-blur-xl p-6 rounded-3xl border border-slate-200/50 shadow-xl">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-6">
-                <div className="text-center">
-                  <p className="text-4xl font-black text-[#F59E0B]">{wishlistCars.length}</p>
-                  <p className="text-xs text-slate-500 font-bold uppercase tracking-wider mt-1">Saved Cars</p>
-                </div>
-                <div className="h-12 w-px bg-slate-200"></div>
-                <div className="text-center">
-                  <p className="text-4xl font-black text-[#0F172A]">
-                    ₹{wishlistCars.reduce((sum, car) => sum + (car.price || 0), 0).toLocaleString()}
-                  </p>
-                  <p className="text-xs text-slate-500 font-bold uppercase tracking-wider mt-1">Total Value</p>
-                </div>
-              </div>
-              <div className="hidden md:flex items-center gap-2">
-                <div className="h-2 w-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span className="text-sm text-slate-600 font-bold">Updated Live</span>
-              </div>
-            </div>
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-black text-[#0F172A]">My Wishlist</h1>
+            <p className="text-slate-400 text-xs font-medium">Your saved vehicles</p>
           </div>
         </div>
+
+        {/* Stats strip */}
+        {!loading && wishlistCars.length > 0 && (
+          <div className="bg-white rounded-2xl p-3 sm:p-4 border border-slate-100 shadow-sm mb-5 flex items-center gap-5">
+            <div className="text-center">
+              <p className="text-2xl font-black text-[#F59E0B]">{wishlistCars.length}</p>
+              <p className="text-[10px] text-slate-400 font-bold uppercase">Saved</p>
+            </div>
+            <div className="w-px h-8 bg-slate-200"></div>
+            <div className="text-center">
+              <p className="text-lg font-black text-[#0F172A]">
+                ₹{(wishlistCars.reduce((s, c) => s + (c.price || 0), 0) / 100000).toFixed(1)}L
+              </p>
+              <p className="text-[10px] text-slate-400 font-bold uppercase">Total Value</p>
+            </div>
+          </div>
+        )}
 
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-32">
-            <div className="relative w-24 h-24 mb-8">
-              <div className="absolute inset-0 border-4 border-[#F59E0B]/20 rounded-full"></div>
-              <div className="absolute inset-0 border-4 border-transparent border-t-[#F59E0B] rounded-full animate-spin"></div>
-              <div className="absolute inset-2 border-4 border-transparent border-t-pink-500 rounded-full animate-spin-reverse"></div>
-            </div>
-            <p className="text-slate-600 font-black text-lg animate-pulse">Loading wishlist...</p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="bg-white rounded-2xl overflow-hidden animate-pulse">
+                <div className="h-28 bg-slate-200"></div>
+                <div className="p-3 space-y-2">
+                  <div className="h-3 bg-slate-200 rounded w-3/4"></div>
+                  <div className="h-3 bg-slate-200 rounded w-1/2"></div>
+                </div>
+              </div>
+            ))}
           </div>
         ) : wishlistCars.length === 0 ? (
-          <div className="text-center py-32 bg-white/60 backdrop-blur-xl rounded-3xl border-2 border-dashed border-slate-300 animate-fade-in">
-            <div className="relative inline-block mb-8">
-              <div className="absolute inset-0 bg-pink-500/20 blur-2xl rounded-full animate-pulse-slow"></div>
-              <div className="relative w-24 h-24 bg-gradient-to-br from-pink-100 to-pink-200 rounded-full flex items-center justify-center">
-                <FaHeart className="text-pink-400 text-4xl" />
-              </div>
-            </div>
-            <h3 className="text-3xl font-black text-[#0F172A] mb-3">Your wishlist is empty</h3>
-            <p className="text-slate-500 text-lg mb-8">Start adding your favorite cars to keep track of them!</p>
-            <Link 
-              to="/"
-              className="inline-flex items-center gap-3 bg-gradient-to-r from-[#F59E0B] to-pink-500 text-white px-8 py-4 rounded-2xl font-black hover:shadow-2xl hover:shadow-pink-500/40 hover:scale-105 transition-all duration-300"
-            >
-              Browse Vehicles <FaArrowRight />
+          <div className="text-center py-20 bg-white rounded-3xl border-2 border-dashed border-slate-200">
+            <FaHeart className="mx-auto text-pink-200 text-5xl mb-4" />
+            <h3 className="text-xl font-black text-[#0F172A] mb-2">Your wishlist is empty</h3>
+            <p className="text-slate-500 text-sm mb-6">Save your favourite cars here.</p>
+            <Link to="/" className="inline-flex items-center gap-2 bg-gradient-to-r from-[#F59E0B] to-pink-500 text-white px-6 py-3 rounded-2xl font-black text-sm">
+              Browse Vehicles <FaArrowRight size={12} />
             </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
             {wishlistCars.map((car, index) => (
-              <div 
-                key={car._id} 
-                className={`group relative animate-fade-in-up ${removingId === car._id ? 'animate-fade-out scale-95' : ''}`}
-                style={{animationDelay: `${index * 0.1}s`}}
+              <div
+                key={car._id}
+                className={`group bg-white rounded-2xl overflow-hidden border border-slate-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 ${removingId === car._id ? 'opacity-0 scale-95' : 'opacity-100'}`}
+                style={{ animationDelay: `${index * 0.05}s` }}
               >
-                {/* Animated Glow Effect */}
-                <div className="absolute -inset-0.5 bg-gradient-to-r from-[#F59E0B] via-pink-500 to-purple-500 rounded-3xl opacity-0 group-hover:opacity-20 blur transition duration-500"></div>
-                
-                <div className="relative bg-white rounded-3xl border border-slate-200/50 overflow-hidden hover:shadow-[0_25px_60px_rgba(0,0,0,0.15)] hover:-translate-y-3 transition-all duration-500">
-                  {/* Image Container */}
-                  <div className="relative h-56 overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-br from-[#0F172A]/0 to-[#0F172A]/40 opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-10"></div>
-                    <img 
-                      src={car.images[0]} 
-                      alt={car.title} 
-                      className="w-full h-full object-cover group-hover:scale-125 group-hover:rotate-2 transition-transform duration-700" 
-                    />
-                    
-                    {/* Gradient Overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#0F172A] via-transparent to-transparent opacity-60"></div>
-                    
-                    {/* Brand Badge */}
-                    <div className="absolute top-4 left-4 z-20">
-                      <div className="relative">
-                        <div className="absolute inset-0 bg-[#F59E0B] rounded-full blur-md animate-pulse-slow"></div>
-                        <span className="relative block bg-white/95 backdrop-blur-md text-[#0F172A] text-[10px] font-black px-4 py-2 rounded-full uppercase tracking-widest shadow-xl">
-                          {car.brand}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Remove Button */}
-                    <button 
-                      onClick={() => handleRemove(car._id)}
-                      className="absolute top-4 right-4 p-3.5 bg-white/95 backdrop-blur-md rounded-full shadow-xl text-pink-500 hover:text-red-600 hover:scale-125 hover:rotate-12 transition-all duration-300 z-20 group/remove"
-                    >
-                      <FaTrash className="group-hover/remove:animate-wiggle" />
-                    </button>
-
-                    {/* Location Badge */}
-                    <div className="absolute bottom-4 left-4 right-4 z-20">
-                      <div className="bg-white/95 backdrop-blur-md rounded-2xl p-3 flex items-center gap-2 shadow-lg">
-                        <FaMapMarkerAlt className="text-[#F59E0B] text-sm" />
-                        <span className="text-xs font-bold text-[#0F172A]">{car.location}</span>
-                      </div>
-                    </div>
+                {/* Image */}
+                <div className="relative h-28 sm:h-36 overflow-hidden">
+                  <img src={car.images[0]} alt={car.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
+                  <span className="absolute top-2 left-2 bg-white/95 text-[#0F172A] text-[9px] font-black px-2 py-0.5 rounded-full uppercase">
+                    {car.brand}
+                  </span>
+                  <button
+                    onClick={() => handleRemove(car._id)}
+                    className="absolute top-2 right-2 p-1.5 bg-white/90 rounded-full shadow text-pink-500 hover:text-red-600 hover:scale-110 transition-all"
+                  >
+                    <FaTrash size={10} />
+                  </button>
+                  <div className="absolute bottom-2 left-2 flex items-center gap-1">
+                    <FaMapMarkerAlt className="text-[#F59E0B] text-[9px]" />
+                    <span className="text-white text-[9px] font-bold truncate max-w-[70px]">{car.location}</span>
                   </div>
+                </div>
 
-                  {/* Details Container */}
-                  <div className="p-6">
-                    <h3 className="text-xl font-black text-[#0F172A] leading-tight group-hover:text-[#F59E0B] transition-colors mb-4 line-clamp-1">
-                      {car.title}
-                    </h3>
-                    
-                    {/* Stats Grid */}
-                    <div className="grid grid-cols-3 gap-2 mb-6">
-                      <div className="flex flex-col items-center p-3 bg-gradient-to-br from-slate-50 to-slate-100 rounded-2xl transform hover:scale-110 hover:rotate-2 transition-all duration-300 group/stat">
-                        <FaGasPump className="text-slate-400 text-sm mb-2 group-hover/stat:text-[#F59E0B] transition-colors" />
-                        <span className="text-[10px] font-black text-slate-600 uppercase">{car.fuelType}</span>
-                      </div>
-                      <div className="flex flex-col items-center p-3 bg-gradient-to-br from-slate-50 to-slate-100 rounded-2xl transform hover:scale-110 hover:rotate-2 transition-all duration-300 group/stat">
-                        <FaCalendarAlt className="text-slate-400 text-sm mb-2 group-hover/stat:text-[#F59E0B] transition-colors" />
-                        <span className="text-[10px] font-black text-slate-600 uppercase">{car.year}</span>
-                      </div>
-                      <div className="flex flex-col items-center p-3 bg-gradient-to-br from-slate-50 to-slate-100 rounded-2xl transform hover:scale-110 hover:rotate-2 transition-all duration-300 group/stat">
-                        <FaTachometerAlt className="text-slate-400 text-sm mb-2 group-hover/stat:text-[#F59E0B] transition-colors" />
-                        <span className="text-[10px] font-black text-slate-600 uppercase">{car.kmDriven.toLocaleString()}</span>
-                      </div>
+                {/* Body */}
+                <div className="p-2.5 sm:p-3">
+                  <h3 className="text-xs sm:text-sm font-black text-[#0F172A] line-clamp-1 mb-1.5 group-hover:text-[#F59E0B] transition-colors">
+                    {car.title}
+                  </h3>
+                  <div className="flex items-center gap-1.5 text-[9px] sm:text-[10px] text-slate-500 font-bold mb-2.5">
+                    <span><FaGasPump className="inline mr-0.5" />{car.fuelType}</span>
+                    <span className="text-slate-300">•</span>
+                    <span>{car.year}</span>
+                    <span className="text-slate-300">•</span>
+                    <span>{(car.kmDriven / 1000).toFixed(0)}k KM</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-[9px] text-slate-400 font-bold">Price</p>
+                      <p className="text-sm font-black text-[#0F172A]">₹{(car.price / 100000).toFixed(1)}L</p>
                     </div>
-
-                    {/* Price and CTA */}
-                    <div className="flex items-center justify-between pt-4 border-t border-slate-100">
-                      <div>
-                        <p className="text-slate-400 text-[10px] font-black uppercase tracking-wider mb-1">Price</p>
-                        <p className="text-2xl font-black text-[#0F172A]">₹{car.price.toLocaleString()}</p>
-                      </div>
-                      <Link 
-                        to={`/car/${car._id}`} 
-                        className="relative bg-gradient-to-r from-[#0F172A] to-[#1E293B] text-white px-6 py-3 rounded-2xl font-bold text-sm hover:shadow-2xl hover:shadow-[#F59E0B]/30 transition-all duration-300 overflow-hidden group/btn"
-                      >
-                        <div className="absolute inset-0 bg-gradient-to-r from-[#F59E0B] to-pink-500 transform scale-x-0 group-hover/btn:scale-x-100 transition-transform origin-left duration-300"></div>
-                        <span className="relative z-10 group-hover/btn:text-[#0F172A] flex items-center gap-2">
-                          <FaEye /> View
-                        </span>
-                      </Link>
-                    </div>
+                    <Link
+                      to={`/car/${car._id}`}
+                      className="bg-[#0F172A] text-white text-[10px] font-black px-2.5 py-1.5 rounded-xl hover:bg-[#F59E0B] hover:text-[#0F172A] transition-all flex items-center gap-1"
+                    >
+                      <FaEye size={9} /> View
+                    </Link>
                   </div>
                 </div>
               </div>
@@ -210,18 +134,11 @@ const Wishlist = () => {
           </div>
         )}
 
-        {/* Action Footer */}
         {wishlistCars.length > 0 && (
-          <div className="mt-12 text-center animate-fade-in">
-            <div className="bg-gradient-to-r from-[#F59E0B]/10 via-pink-500/10 to-purple-500/10 backdrop-blur-xl p-8 rounded-3xl border border-slate-200/50">
-              <p className="text-slate-600 font-bold mb-4">Ready to schedule a viewing?</p>
-              <Link 
-                to="/"
-                className="inline-flex items-center gap-3 bg-gradient-to-r from-[#F59E0B] to-pink-500 text-white px-8 py-4 rounded-2xl font-black hover:shadow-2xl hover:shadow-pink-500/40 hover:scale-105 transition-all duration-300"
-              >
-                Browse More Vehicles <FaArrowRight />
-              </Link>
-            </div>
+          <div className="mt-8 text-center">
+            <Link to="/" className="inline-flex items-center gap-2 bg-gradient-to-r from-[#F59E0B] to-pink-500 text-white px-6 py-3 rounded-2xl font-black text-sm hover:scale-105 transition-all">
+              Browse More <FaArrowRight size={12} />
+            </Link>
           </div>
         )}
       </div>

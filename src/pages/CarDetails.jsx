@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { FaWhatsapp, FaCheckCircle, FaGasPump, FaCalendarAlt, FaTachometerAlt, FaMapMarkerAlt, FaCar, FaArrowLeft, FaStar, FaShieldAlt } from 'react-icons/fa';
+import { FaWhatsapp, FaCheckCircle, FaGasPump, FaCalendarAlt, FaTachometerAlt, FaMapMarkerAlt, FaCar, FaArrowLeft, FaShieldAlt, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import api from '../api';
 
 const CarDetails = () => {
@@ -9,45 +9,30 @@ const CarDetails = () => {
   const navigate = useNavigate();
   const [car, setCar] = useState(null);
   const [selectedImage, setSelectedImage] = useState(0);
-  const [imageLoading, setImageLoading] = useState(true);
-  
 
   useEffect(() => {
-    const fetchCar = async () => {
-      try {
-        const res = await api.get(`/cars/${id}`);
-        setCar(res.data);
-      } catch (err) {
-        console.error(err);
-      }
-    };
-    fetchCar();
+    api.get(`/cars/${id}`).then(res => setCar(res.data)).catch(console.error);
   }, [id]);
 
   if (!car) return (
     <div className="flex flex-col items-center justify-center min-h-screen">
-      <div className="relative w-24 h-24 mb-8">
+      <div className="relative w-16 h-16 mb-4">
         <div className="absolute inset-0 border-4 border-[#F59E0B]/20 rounded-full"></div>
         <div className="absolute inset-0 border-4 border-transparent border-t-[#F59E0B] rounded-full animate-spin"></div>
-        <div className="absolute inset-2 border-4 border-transparent border-t-blue-500 rounded-full animate-spin-reverse"></div>
       </div>
-      <p className="text-slate-600 font-black text-lg animate-pulse">Loading vehicle details...</p>
+      <p className="text-slate-600 font-black text-sm animate-pulse">Loading vehicle details...</p>
     </div>
   );
 
   const handleWhatsAppEnquiry = () => {
     const phoneNumber = "91XXXXXXXXXX";
     const message = `Hi, I am interested in the ${car.title} priced at ₹${car.price}. Link: ${window.location.href}`;
-    const encodedMessage = encodeURIComponent(message);
-    window.open(`https://wa.me/${phoneNumber}?text=${encodedMessage}`, '_blank');
+    window.open(`https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`, '_blank');
   };
 
   const handlePayment = async () => {
     try {
-      const { data: order } = await axios.post('http://localhost:4000/api/payment/order', {
-        amount: car.tokenAmount
-      });
-
+      const { data: order } = await axios.post('http://localhost:4000/api/payment/order', { amount: car.tokenAmount });
       const options = {
         key: "YOUR_RAZORPAY_KEY_ID",
         amount: order.amount,
@@ -57,203 +42,154 @@ const CarDetails = () => {
         order_id: order.id,
         handler: async (response) => {
           try {
-            const bookingData = {
-              carId: car._id,
-              tokenAmount: car.tokenAmount,
-              paymentId: response.razorpay_payment_id
-            };
-            await axios.post('http://localhost:4000/api/bookings', bookingData);
+            await axios.post('http://localhost:4000/api/bookings', {
+              carId: car._id, tokenAmount: car.tokenAmount, paymentId: response.razorpay_payment_id
+            });
             alert("Booking Successful! The dealer will contact you.");
-          } catch (err) {
-            alert("Payment recorded, but booking failed. Contact support.");
-          }
+          } catch { alert("Payment recorded, but booking failed. Contact support."); }
         },
-        prefill: {
-          name: "User Name",
-          email: "user@example.com",
-        },
+        prefill: { name: "User Name", email: "user@example.com" },
         theme: { color: "#F59E0B" },
       };
-
-      const rzp = new window.Razorpay(options);
-      rzp.open();
-    } catch (err) {
-      console.error("Payment Error:", err);
-    }
+      new window.Razorpay(options).open();
+    } catch (err) { console.error("Payment Error:", err); }
   };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-[#F8FAFC] via-[#F1F5F9] to-[#E2E8F0] relative overflow-hidden">
-      {/* Animated Background */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 right-20 w-96 h-96 bg-[#F59E0B]/5 rounded-full blur-3xl animate-float"></div>
-        <div className="absolute bottom-20 left-20 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl animate-float-delayed"></div>
-      </div>
+  const prevImage = () => setSelectedImage((prev) => (prev - 1 + car.images.length) % car.images.length);
+  const nextImage = () => setSelectedImage((prev) => (prev + 1) % car.images.length);
 
-      <div className="relative max-w-7xl mx-auto px-4 py-12">
-        {/* Back Button with Animation */}
-        <button 
+  return (
+    <div className="min-h-screen bg-[#F8FAFC]">
+      <div className="max-w-5xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
+        {/* Back Button */}
+        <button
           onClick={() => navigate(-1)}
-          className="group mb-8 flex items-center gap-3 text-slate-600 hover:text-[#F59E0B] transition-all duration-300"
+          className="flex items-center gap-2 text-slate-600 hover:text-[#F59E0B] transition-colors mb-4 text-sm font-bold"
         >
-          <div className="p-3 bg-white rounded-full shadow-lg group-hover:shadow-xl group-hover:shadow-[#F59E0B]/20 transition-all">
-            <FaArrowLeft className="group-hover:-translate-x-1 transition-transform" />
-          </div>
-          <span className="font-bold">Back to listings</span>
+          <FaArrowLeft size={12} /> Back
         </button>
 
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-          {/* Image Gallery Section */}
-          <div className="lg:col-span-3 space-y-6">
-            {/* Main Image with Loading Effect */}
-            <div className="relative group">
-              <div className="absolute -inset-0.5 bg-gradient-to-r from-[#F59E0B] via-purple-500 to-blue-500 rounded-3xl opacity-20 blur group-hover:opacity-40 transition duration-500"></div>
-              <div className="relative bg-white p-4 rounded-3xl shadow-2xl overflow-hidden">
-                {imageLoading && (
-                  <div className="absolute inset-0 bg-slate-200 animate-pulse"></div>
-                )}
-                <img 
-                  src={car.images[selectedImage]} 
-                  alt={car.title} 
-                  className="w-full h-[500px] object-cover rounded-2xl"
-                  onLoad={() => setImageLoading(false)}
-                />
-                
-                {/* Image Overlay Info */}
-                <div className="absolute top-8 left-8 flex gap-3">
-                  <span className="bg-white/95 backdrop-blur-md text-[#0F172A] text-xs font-black px-4 py-2 rounded-full shadow-lg">
-                    {car.brand}
-                  </span>
-                  <span className="bg-green-500/95 backdrop-blur-md text-white text-xs font-black px-4 py-2 rounded-full shadow-lg flex items-center gap-2">
-                    <FaCheckCircle /> Available
-                  </span>
-                </div>
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 sm:gap-6">
+          {/* ── Image Gallery ── */}
+          <div className="lg:col-span-3 space-y-3">
+            {/* Main Image with swipe arrows */}
+            <div className="relative bg-white rounded-2xl overflow-hidden shadow-lg">
+              <img
+                src={car.images[selectedImage]}
+                alt={car.title}
+                className="w-full h-56 sm:h-80 object-cover"
+              />
+              {/* Overlay badges */}
+              <div className="absolute top-3 left-3 flex gap-2">
+                <span className="bg-white/95 text-[#0F172A] text-[10px] font-black px-3 py-1 rounded-full shadow">{car.brand}</span>
+                <span className="bg-green-500/95 text-white text-[10px] font-black px-3 py-1 rounded-full shadow flex items-center gap-1">
+                  <FaCheckCircle size={8} /> Available
+                </span>
+              </div>
+              {/* Arrow controls */}
+              {car.images.length > 1 && (
+                <>
+                  <button onClick={prevImage} className="absolute left-2 top-1/2 -translate-y-1/2 p-2 bg-white/80 rounded-full shadow hover:bg-white transition-all">
+                    <FaChevronLeft size={12} />
+                  </button>
+                  <button onClick={nextImage} className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-white/80 rounded-full shadow hover:bg-white transition-all">
+                    <FaChevronRight size={12} />
+                  </button>
+                </>
+              )}
+              {/* Dot indicators */}
+              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+                {car.images.map((_, i) => (
+                  <button key={i} onClick={() => setSelectedImage(i)}
+                    className={`rounded-full transition-all ${i === selectedImage ? 'w-5 h-2 bg-[#F59E0B]' : 'w-2 h-2 bg-white/60'}`}
+                  />
+                ))}
               </div>
             </div>
 
-            {/* Thumbnail Gallery */}
-            <div className="grid grid-cols-4 gap-4">
-              {car.images.map((img, index) => (
-                <button
-                  key={index}
-                  onClick={() => {
-                    setSelectedImage(index);
-                    setImageLoading(true);
-                  }}
-                  className={`relative group/thumb overflow-hidden rounded-2xl transition-all duration-300 ${
-                    selectedImage === index 
-                      ? 'ring-4 ring-[#F59E0B] scale-105' 
-                      : 'hover:scale-105 ring-2 ring-transparent hover:ring-slate-300'
-                  }`}
+            {/* Thumbnails — scrollable horizontally on mobile */}
+            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+              {car.images.map((img, i) => (
+                <button key={i} onClick={() => setSelectedImage(i)}
+                  className={`flex-shrink-0 rounded-xl overflow-hidden transition-all ${selectedImage === i ? 'ring-2 ring-[#F59E0B] scale-105' : 'opacity-60 hover:opacity-100'}`}
                 >
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#0F172A]/60 to-transparent opacity-0 group-hover/thumb:opacity-100 transition-opacity"></div>
-                  <img 
-                    src={img} 
-                    className="h-24 w-full object-cover"
-                    alt={`View ${index + 1}`}
-                  />
+                  <img src={img} className="h-14 w-20 sm:h-16 sm:w-24 object-cover" alt="" />
                 </button>
               ))}
             </div>
 
-            {/* Features Section */}
-            <div className="bg-white/60 backdrop-blur-xl p-8 rounded-3xl border border-slate-200/50 shadow-xl">
-              <h3 className="text-2xl font-black text-[#0F172A] mb-6 flex items-center gap-3">
-                <FaStar className="text-[#F59E0B]" />
-                Key Features
-              </h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {/* Key Features — horizontal scroll on mobile */}
+            <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100">
+              <h3 className="text-base font-black text-[#0F172A] mb-3">Key Features</h3>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {[
-                  { icon: FaGasPump, label: 'Fuel Type', value: car.fuelType },
+                  { icon: FaGasPump, label: 'Fuel', value: car.fuelType },
                   { icon: FaCalendarAlt, label: 'Year', value: car.year },
-                  { icon: FaTachometerAlt, label: 'KM Driven', value: car.kmDriven.toLocaleString() },
+                  { icon: FaTachometerAlt, label: 'KM', value: `${car.kmDriven.toLocaleString()}` },
                   { icon: FaMapMarkerAlt, label: 'Location', value: car.location },
-                ].map((feature, idx) => (
-                  <div 
-                    key={idx}
-                    className="bg-gradient-to-br from-slate-50 to-slate-100 p-4 rounded-2xl text-center transform hover:scale-105 hover:rotate-2 transition-all duration-300 group/feature"
-                  >
-                    <feature.icon className="text-2xl text-slate-400 group-hover/feature:text-[#F59E0B] mx-auto mb-2 transition-colors" />
-                    <p className="text-xs text-slate-500 font-bold uppercase mb-1">{feature.label}</p>
-                    <p className="text-lg font-black text-[#0F172A]">{feature.value}</p>
+                ].map((f, i) => (
+                  <div key={i} className="bg-slate-50 p-3 rounded-xl text-center">
+                    <f.icon className="text-[#F59E0B] mx-auto mb-1 text-sm" />
+                    <p className="text-[9px] text-slate-400 font-bold uppercase mb-0.5">{f.label}</p>
+                    <p className="text-xs font-black text-[#0F172A] truncate">{f.value}</p>
                   </div>
                 ))}
               </div>
             </div>
           </div>
 
-          {/* Info & CTA Section */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Price Card */}
-            <div className="relative group">
-              <div className="absolute -inset-0.5 bg-gradient-to-r from-[#F59E0B] to-[#FBBF24] rounded-3xl opacity-30 blur group-hover:opacity-50 transition duration-500"></div>
-              <div className="relative bg-white p-8 rounded-3xl shadow-2xl">
-                <div className="flex items-start justify-between mb-6">
-                  <div>
-                    <h1 className="text-3xl font-black text-[#0F172A] mb-2">{car.title}</h1>
-                    <p className="text-slate-500 font-medium flex items-center gap-2">
-                      <FaCar className="text-[#F59E0B]" />
-                      {car.brand} • {car.model}
-                    </p>
+          {/* ── Info & CTA ── */}
+          <div className="lg:col-span-2 space-y-4">
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-4 sm:p-6">
+              {/* Title */}
+              <div className="mb-4">
+                <h1 className="text-xl sm:text-2xl font-black text-[#0F172A] leading-tight">{car.title}</h1>
+                <p className="text-slate-500 text-sm flex items-center gap-1.5 mt-1">
+                  <FaCar className="text-[#F59E0B]" /> {car.brand} • {car.model}
+                </p>
+              </div>
+
+              {/* Price */}
+              <div className="bg-gradient-to-r from-[#F59E0B]/10 to-[#FBBF24]/10 p-4 rounded-xl mb-4 border border-[#F59E0B]/20">
+                <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mb-1">Asking Price</p>
+                <p className="text-3xl sm:text-4xl font-black text-[#0F172A]">₹{car.price.toLocaleString()}</p>
+                <div className="flex items-center gap-1.5 mt-2">
+                  <FaShieldAlt className="text-green-500 text-xs" />
+                  <span className="text-xs text-slate-500 font-bold">Best price guaranteed</span>
+                </div>
+              </div>
+
+              {/* Description */}
+              <div className="mb-4 pb-4 border-b border-slate-100">
+                <h3 className="text-sm font-black text-[#0F172A] mb-2">Description</h3>
+                <p className="text-slate-600 text-sm leading-relaxed">{car.description}</p>
+              </div>
+
+              {/* CTAs */}
+              <div className="space-y-2.5">
+                <button
+                  onClick={handleWhatsAppEnquiry}
+                  className="w-full bg-green-500 text-white py-3.5 rounded-xl font-black text-sm flex items-center justify-center gap-2 hover:bg-green-600 active:scale-95 transition-all shadow-lg shadow-green-500/30"
+                >
+                  <FaWhatsapp size={18} /> Enquire on WhatsApp
+                </button>
+                <button
+                  onClick={handlePayment}
+                  className="w-full bg-[#0F172A] text-white py-3.5 rounded-xl font-black text-sm flex items-center justify-center gap-2 hover:bg-[#F59E0B] hover:text-[#0F172A] active:scale-95 transition-all shadow-lg"
+                >
+                  <FaCheckCircle size={16} />
+                  Pay Token (₹{car.tokenAmount?.toLocaleString() || '10,000'})
+                </button>
+              </div>
+
+              {/* Trust badges */}
+              <div className="grid grid-cols-3 gap-2 mt-4 pt-4 border-t border-slate-100 text-center">
+                {[{ e: '✓', t: 'Verified' }, { e: '⚡', t: 'Quick Sale' }, { e: '🛡️', t: 'Secure' }].map((b, i) => (
+                  <div key={i}>
+                    <div className="text-xl mb-0.5">{b.e}</div>
+                    <p className="text-[10px] font-bold text-slate-500">{b.t}</p>
                   </div>
-                </div>
-                
-                <div className="bg-gradient-to-r from-[#F59E0B]/10 to-[#FBBF24]/10 p-6 rounded-2xl mb-6">
-                  <p className="text-xs text-slate-500 font-black uppercase tracking-widest mb-2">Asking Price</p>
-                  <p className="text-5xl font-black text-[#0F172A]">₹{car.price.toLocaleString()}</p>
-                  <div className="flex items-center gap-2 mt-3">
-                    <FaShieldAlt className="text-green-500" />
-                    <span className="text-xs text-slate-600 font-bold">Best price guaranteed</span>
-                  </div>
-                </div>
-
-                {/* Description */}
-                <div className="border-t border-slate-100 pt-6 mb-6">
-                  <h3 className="text-lg font-black text-[#0F172A] mb-3">Description</h3>
-                  <p className="text-slate-600 leading-relaxed">{car.description}</p>
-                </div>
-
-                {/* Action Buttons */}
-                <div className="space-y-3">
-                  {/* WhatsApp Button */}
-                  <button 
-                    onClick={handleWhatsAppEnquiry}
-                    className="relative w-full bg-gradient-to-r from-green-500 to-green-600 text-white py-4 rounded-2xl font-black text-lg shadow-xl shadow-green-500/30 overflow-hidden group/whatsapp"
-                  >
-                    <div className="absolute inset-0 bg-gradient-to-r from-green-600 to-green-700 transform scale-x-0 group-hover/whatsapp:scale-x-100 transition-transform origin-left duration-300"></div>
-                    <div className="relative z-10 flex items-center justify-center gap-3">
-                      <FaWhatsapp className="text-2xl group-hover/whatsapp:scale-125 transition-transform" />
-                      <span>Enquire on WhatsApp</span>
-                    </div>
-                  </button>
-
-                  {/* Token Payment Button */}
-                  <button 
-                    onClick={handlePayment}
-                    className="relative w-full bg-gradient-to-r from-[#0F172A] to-[#1E293B] text-white py-4 rounded-2xl font-black text-lg shadow-xl shadow-slate-900/30 overflow-hidden group/pay"
-                  >
-                    <div className="absolute inset-0 bg-gradient-to-r from-[#F59E0B] to-[#FBBF24] transform scale-x-0 group-hover/pay:scale-x-100 transition-transform origin-left duration-300"></div>
-                    <div className="relative z-10 flex items-center justify-center gap-3 group-hover/pay:text-[#0F172A] transition-colors">
-                      <FaCheckCircle className="text-xl" />
-                      <span>Pay Token (₹{car.tokenAmount?.toLocaleString() || '10,000'})</span>
-                    </div>
-                    <div className="absolute inset-0 rounded-2xl opacity-0 group-hover/pay:opacity-100 transition-opacity duration-300 blur-xl bg-[#F59E0B]/50"></div>
-                  </button>
-                </div>
-
-                {/* Trust Badges */}
-                <div className="grid grid-cols-3 gap-3 mt-6 pt-6 border-t border-slate-100">
-                  {[
-                    { icon: '✓', text: 'Verified' },
-                    { icon: '⚡', text: 'Quick Sale' },
-                    { icon: '🛡️', text: 'Secure' }
-                  ].map((badge, idx) => (
-                    <div key={idx} className="text-center">
-                      <div className="text-2xl mb-1">{badge.icon}</div>
-                      <p className="text-xs font-bold text-slate-600">{badge.text}</p>
-                    </div>
-                  ))}
-                </div>
+                ))}
               </div>
             </div>
           </div>
