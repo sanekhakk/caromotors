@@ -13,6 +13,7 @@ import ManageInventory from './pages/admin/ManageInventory';
 import AdminLayout from './pages/admin/AdminLayout';
 import Wishlist from './pages/Wishlist';
 import Footer from './components/Footer';
+import Categories from './pages/Categories';
 
 const AppRoutes = () => {
   const { user, loading } = useContext(AuthContext);
@@ -39,6 +40,7 @@ const AppRoutes = () => {
         /* 2. USER/GUEST BRANCH */
         <Route element={<><Navbar /><Outlet /><Footer /></>}>
           <Route path="/" element={<Home />} />
+          <Route path="/categories" element={<Categories />} />
           <Route path="/car/:id" element={<CarDetails />} />
           <Route path="/dashboard" element={<UserDashboard />} />
           <Route path="/wishlist" element={<Wishlist />} />

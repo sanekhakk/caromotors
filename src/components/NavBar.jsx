@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import AuthContext from '../context/AuthContext';
 import logo from '../assets/logo.png';
 import AuthModal from './AuthModal';
-import { FaHeart, FaUser, FaHome, FaBars, FaTimes } from 'react-icons/fa';
+import { FaHeart, FaUser, FaHome, FaBars, FaTimes, FaThLarge } from 'react-icons/fa';
 
 const Navbar = () => {
   const { user, logout } = useContext(AuthContext);
@@ -19,12 +19,8 @@ const Navbar = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Close drawer on route change
-  useEffect(() => {
-    setDrawerOpen(false);
-  }, [location.pathname]);
+  useEffect(() => { setDrawerOpen(false); }, [location.pathname]);
 
-  // Lock body scroll when drawer is open
   useEffect(() => {
     document.body.style.overflow = drawerOpen ? 'hidden' : '';
     return () => { document.body.style.overflow = ''; };
@@ -66,6 +62,12 @@ const Navbar = () => {
               <Link to="/" className={desktopLinkClass('/')}>
                 <FaHome size={13} /> Home
               </Link>
+
+              {/* ── CATEGORIES LINK (always visible) ── */}
+              <Link to="/categories" className={desktopLinkClass('/categories')}>
+                <FaThLarge size={13} /> Categories
+              </Link>
+
               {user && user.role !== 'admin' && (
                 <>
                   <Link to="/wishlist" className={desktopLinkClass('/wishlist')}>
@@ -128,7 +130,7 @@ const Navbar = () => {
         onClick={() => setDrawerOpen(false)}
       />
 
-      {/* Drawer panel — slides in from the right */}
+      {/* Drawer panel */}
       <div
         className={`fixed top-0 right-0 h-full w-72 z-[70] md:hidden bg-white shadow-2xl flex flex-col transition-transform duration-300 ease-in-out ${
           drawerOpen ? 'translate-x-0' : 'translate-x-full'
@@ -157,6 +159,14 @@ const Navbar = () => {
             Home
           </Link>
 
+          {/* ── CATEGORIES in drawer ── */}
+          <Link to="/categories" className={navLinkClass('/categories')}>
+            <div className={`p-1.5 rounded-lg ${isActive('/categories') ? 'bg-[#F59E0B]/20' : 'bg-slate-100'}`}>
+              <FaThLarge size={13} className={isActive('/categories') ? 'text-[#F59E0B]' : 'text-slate-500'} />
+            </div>
+            Categories
+          </Link>
+
           {user && user.role !== 'admin' && (
             <>
               <Link to="/wishlist" className={navLinkClass('/wishlist')}>
@@ -180,7 +190,6 @@ const Navbar = () => {
         <div className="px-4 py-5 border-t border-slate-100 space-y-2">
           {user ? (
             <>
-              {/* User info chip */}
               <div className="flex items-center gap-3 bg-slate-50 rounded-xl px-4 py-3 mb-3">
                 <div className="h-9 w-9 rounded-full bg-gradient-to-br from-[#F59E0B] to-amber-300 flex items-center justify-center font-black text-[#0F172A] text-sm flex-shrink-0">
                   {user.role === 'admin' ? 'AD' : 'U'}
