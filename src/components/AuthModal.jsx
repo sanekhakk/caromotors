@@ -22,7 +22,7 @@ const AuthModal = ({ isOpen, onClose }) => {
         if (freshUser?.role === 'admin') window.location.href = '/admin/dashboard';
         onClose();
       } else {
-        await axios.post('http://localhost:4000/api/auth/register', formData);
+        await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/login`, formData);
         setIsLogin(true); // Switch to login after success
       }
     } catch (err) {
