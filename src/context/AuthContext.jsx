@@ -23,7 +23,7 @@ useEffect(() => {
 }, []);
 
   const login = async (email, password) => {
-    const res = await axios.post('http://localhost:4000/api/auth/login', { email, password });
+    const res = await axios.post(`${import.meta.env.VITE_API_URL}/auth/login`, { email, password });
     localStorage.setItem('token', res.data.token);
     
     // We need to decode the token to get the role, OR modify the backend to send user info on login.
